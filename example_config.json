@@ -1,0 +1,5 @@
+{
+  "inputs": [ { "interface": { "type": "SPIDevAksIM", "config": "3000000", "channel": 0 } },
+              { "interface": { "type": "SPIDevAksIM", "config": "3000000", "channel": 1 } } ],
+  "output": "in0 - in1"
+}
