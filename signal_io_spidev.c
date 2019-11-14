@@ -82,12 +82,16 @@ void EndDevice( long int deviceID )
 
 size_t GetMaxInputSamplesNumber( long int deviceID )
 {
+  if( deviceID == SIGNAL_IO_DEVICE_INVALID_ID ) return 0;
+  
   return 1;
 }
 
 size_t Read( long int deviceID, unsigned int channel, double* ref_value )
 {
   *ref_value = 0.0;
+  
+  if( deviceID == SIGNAL_IO_DEVICE_INVALID_ID ) return 0;
   
   if( channel > 2 ) return 0;
    
@@ -122,6 +126,8 @@ void Reset( long int deviceID )
 
 bool CheckInputChannel( long int deviceID, unsigned int channel )
 {
+  if( deviceID == SIGNAL_IO_DEVICE_INVALID_ID ) return false;
+  
   if( channel > 2 ) return false;
   
   return true;
