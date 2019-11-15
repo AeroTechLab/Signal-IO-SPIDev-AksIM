@@ -69,7 +69,7 @@ long int InitDevice( const char* configuration )
     return SIGNAL_IO_DEVICE_INVALID_ID;
   }
 
-  return 0;
+  return 1;
 }
 
 void EndDevice( long int deviceID )
