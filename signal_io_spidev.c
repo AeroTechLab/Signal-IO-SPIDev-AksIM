@@ -49,11 +49,11 @@ long int InitDevice( const char* configuration )
     {
       if( (spiFDs[ channel ] = open( SPI_DEVS[ channel ], O_RDWR )) < 0 )
         fprintf( stderr, "Unable to open SPI device %s: %s\n", SPI_DEVS[ channel ], strerror( errno ) );
-      if( ioctl( spiFDs[ channel ], SPI_IOC_RD_MODE, &mode ) < 0 )
+      if( ioctl( spiFDs[ channel ], SPI_IOC_WR_MODE, &mode ) < 0 )
         fprintf( stderr, "Unable to change SPI device %s mode: %s\n", SPI_DEVS[ channel ], strerror( errno ) );  
-      if( ioctl( spiFDs[ channel ], SPI_IOC_RD_BITS_PER_WORD, &bitsPerWord ) < 0 )
+      if( ioctl( spiFDs[ channel ], SPI_IOC_WR_BITS_PER_WORD, &bitsPerWord ) < 0 )
         fprintf( stderr, "Unable to change SPI device %s BPW: %s\n", SPI_DEVS[ channel ], strerror( errno ) );
-      if( ioctl( spiFDs[ channel ], SPI_IOC_RD_MAX_SPEED_HZ, &speedHz ) < 0 )
+      if( ioctl( spiFDs[ channel ], SPI_IOC_WR_MAX_SPEED_HZ, &speedHz ) < 0 )
         fprintf( stderr, "Unable to change SPI device %s speed: %s\n", SPI_DEVS[ channel ], strerror( errno ) );
   
       spiIOCs[ channel ].len = 2;
