@@ -31,6 +31,7 @@
 #include <pthread.h>
 
 #define CHANNELS_NUMBER 2
+#define READ_SAMPLES_NUMBER 5
 
 const char* SPI_DEVS[] = { "/dev/spidev0.0", "/dev/spidev0.1" };
 
@@ -158,6 +159,9 @@ void ReleaseOutputChannel( long int deviceID, unsigned int channel )
 
 static void* AsyncTransfer( void* args )
 {  
+  uint16_t rawSamplesTable[ CHANNELS_NUMBER ][ READ_SAMPLES_NUMBER ] = { 0 };
+  size_t channelReadsCount = 0;
+  
   isRunning = true;
   
   while( isRunning )
@@ -169,14 +173,28 @@ static void* AsyncTransfer( void* args )
       spiIOCs[ channel ].tx_buf = spiIOCs[ channel ].rx_buf = (uint64_t) inputData;
       if( ioctl( spiFDs[ channel ], SPI_IOC_MESSAGE( 1 ), &(spiIOCs[ channel ]) ) < 0 )
         fprintf( stderr, "Unable to read from SPI device %s: %s\n", SPI_DEVS[ channel ], strerror( errno ) );
-      uint16_t rawInputValue = ( ( inputData[ 0 ] << 8 ) & 0xFF00 ) + inputData[ 1 ];
+      rawSamplesTable[ channel ][ channelReadsCount ] = ( ( inputData[ 0 ] << 8 ) & 0xFF00 ) + inputData[ 1 ];
+    }
+     
+    channelReadsCount++;
+    
+    if( channelReadsCount >= READ_SAMPLES_NUMBER )
+    {
+      for( size_t channel = 0; channel < CHANNELS_NUMBER; channel++ )
+      {
+        uint16_t rawInputAverageValue = 0;
+        for( int sampleIndex = 0; sampleIndex < channelReadsCount; sampleIndex++ )
+            rawInputAverageValue += rawSamplesTable[ channel ][ sampleIndex ] / channelReadsCount;
+        
+        int32_t overflowsNumber = inputValues[ channel ] / UINT16_MAX;
+        if( inputValues[ channel ] < 0 ) overflowsNumber--;
+        int32_t newInputValue = overflowsNumber * UINT16_MAX + rawInputAverageValue;
+        if( ( inputValues[ channel ] - newInputValue ) > ( UINT16_MAX / 2 ) ) overflowsNumber++;
+        if( ( inputValues[ channel ] - newInputValue ) < ( -UINT16_MAX / 2 ) ) overflowsNumber--;
+        inputValues[ channel ] = overflowsNumber * UINT16_MAX + rawInputAverageValue;
+      }
       
-      int32_t overflowsNumber = inputValues[ channel ] / UINT16_MAX;
-      if( inputValues[ channel ] < 0 ) overflowsNumber--;
-      int32_t newInputValue = overflowsNumber * UINT16_MAX + rawInputValue;
-      if( ( inputValues[ channel ] - newInputValue ) > ( UINT16_MAX / 2 ) ) overflowsNumber++;
-      if( ( inputValues[ channel ] - newInputValue ) < ( -UINT16_MAX / 2 ) ) overflowsNumber--;
-      inputValues[ channel ] = overflowsNumber * UINT16_MAX + rawInputValue;
+      channelReadsCount = 0;
     }
   }
   
